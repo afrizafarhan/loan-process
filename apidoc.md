@@ -10,15 +10,15 @@ Create new loan application
     {
       full_name: string
       ktp_number: string
-      gender: string
-      date_of_birth: date
+      gender: string (only accept male, female)
+      date_of_birth: string (only accept format yy/mm/dd)
       address: string
-      phone_number: string
+      phone_number: string (length must bettween 10 and 13)
       email: string
-      nationality: string
+      nationality: string (only accept value indonesia)
       address_province: string
-      ktp_image: image
-      selfie_image: image
+      ktp_image: image (only accept mime type: jpg,png)
+      selfie_image: image (only accept mime type: jpg,png)
       loan_amount: number
       tenor: number
     }
@@ -83,48 +83,6 @@ Get list loan application
     }
     ```
 
-***Get /loan-applications/:customer_id***
-----
-Get loan application by id
-* **URL Params**  
-  *Required:* `customer_id=[uint]`
-* **Headers**  
-  *Content-Type:* `application/json`
-* **Success Response:**
-  * **Code:** 200
-    * **Content:**
-      ```json
-      {
-          "status": "OK",
-          "code": 200,
-          "data": {
-            "full_name": "Farhan",
-            "ktp_number": "1234567890123123",
-            "gender": "Male",
-            "date_of_birth": "2001-01-01",
-            "address": "Jl. Test",
-            "phone_number": "081234567890",
-            "email": "farhan@gmail.com",
-            "nationality": "INDONESIA",
-            "address_province": "SUMATERA UTARA",
-            "ktp_image": "https://loan.com/assets/ktp",
-            "selfie_image": "https://loan.com/assets/selfie",
-            "loan_amount": 1000000,
-            "tenor": 3,
-            "status": "accepted"
-          }
-      }
-      ```
-* **Error Response:**
-    * **Code:** 404
-      * **Content:**
-        ```json
-        {
-            "status": "NOT_FOUND",
-            "code": 404,
-            "message": "The loan application not found"
-        }
-        ```
 ***POST /loan-applications/:customer_id/reapply***
 ----
 Reapply new loan application

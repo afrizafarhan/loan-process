@@ -49,7 +49,7 @@ Create new loan application
       {
           "status": "BAD_REQUEST",
           "code": 400,
-          "message": "The loan application daily limit exceeded"
+          "error": "The loan application daily limit exceeded"
       }
       ```
       * **Content:**
@@ -57,7 +57,7 @@ Create new loan application
       {
           "status": "BAD_REQUEST",
           "code": 400,
-          "message": "ktp number already exists"
+          "error": "ktp number already exists"
       }
       ```
       * **Content:**
@@ -65,7 +65,7 @@ Create new loan application
       {
           "status": "BAD_REQUEST",
           "code": 400,
-          "message": "email already exists"
+          "error": "email already exists"
       }
       ```
 
@@ -83,7 +83,7 @@ Get list loan application
         "code": 200,
         "data": [
         {
-          "customer_id": 1,
+          "id": 1,
           "full_name": "Farhan",
           "ktp_number": "1234567890123123",
           "email": "farhan@gmail.com",
@@ -120,7 +120,7 @@ Reapply new loan application
       {
           "status": "BAD_REQUEST",
           "code": 400,
-          "message": "The loan application daily limit exceeded"
+          "error": "The loan application daily limit exceeded"
       }
       ```
     * **Scenario:** Customer already have accepted loan
@@ -129,6 +129,147 @@ Reapply new loan application
       {
           "status": "BAD_REQUEST",
           "code": 400,
-          "message": "The customer already have accepted loan"
+          "error": "The customer already have accepted loan"
+      }
+      ```
+
+***Get /v1/customers***
+----
+Get list customers
+* **Headers**  
+  *Content-Type:* `application/json`
+* **Success Response:**
+* **Code:** 200
+  * **Content:**
+    ```json
+    {
+        "status": "OK",
+        "code": 200,
+        "data": [
+        {
+          "id": 1,
+          "full_name": "Farhan",
+          "ktp_number": "1234567890123123",
+          "email": "farhan@gmail.com",
+        }
+      ]
+    }
+    ```
+
+
+***Get /v1/customers/:id/detail**
+Get detail data customer
+* **Headers**  
+  *Content-Type:* `application/json`
+* **Success Response:**
+* **Code:** 200
+  * **Content:**
+    ```json
+    {
+        "status": "OK",
+        "code": 200,
+        "data": {
+          "id": 1,
+          "full_name": "Farhan",
+          "ktp_number": "1234567890123123",
+          "date_of_birth": "2001-01-01",
+          "address": "Jl. Test",
+          "phone_number": "081234567890",
+          "email": "farhan@gmail.com",
+          "nationality": "indonesia",
+          "address_province": "SUMATERA UTARA",
+          "ktp_image": "http://loan.com/resources/ktp/image.png",
+          "selfie_image": "http://loan.com/resources/selfie/image.png",
+          "created_at": "2023-01-01",
+          "updated_at": "2023-01-01"
+        }
+    }
+    ```
+* **Error Response:**
+  * **Code:** 404
+    * **Scenario:** Customer not found
+    * **Content:**
+      ```json
+      {
+          "status": "NOT_FOUND",
+          "code": 404,
+          "error": "customer not found"
+      }
+      ```
+
+***Get /v1/customers/:id/loan-applications**
+Get detail data customer
+* **Headers**  
+  *Content-Type:* `application/json`
+* **Success Response:**
+* **Code:** 200
+  * **Content:**
+    ```json
+    {
+        "status": "OK",
+        "code": 200,
+        "data": [
+          {
+            "amount": 1000000,
+            "tenor": 3,
+            "status": "accepted",
+            "created_at": "2023-01-01",
+            "updated_at": "2023-01-01"
+          },
+      ]
+    }
+    ```
+* **Error Response:**
+  * **Code:** 404
+    * **Scenario:** Customer not found
+    * **Content:**
+      ```json
+      {
+          "status": "NOT_FOUND",
+          "code": 404,
+          "error": "customer not found"
+      }
+      ```
+
+***Get /v1/payment-installments/:loan_request_id***
+----
+Get list installment for accepted loan application
+* **Headers**  
+  *Content-Type:* `application/json`
+* **Success Response:**
+* **Code:** 200
+  * **Content:**
+    ```json
+    {
+        "status": "OK",
+        "code": 200,
+        "data": [
+          {
+            "amount": 333333,
+            "due_date": "2023-01-01",
+            "status": "not_paid"
+          },
+          {
+            "amount": 333333,
+            "due_date": "2023-02-01",
+            "status": "not_paid"
+          },
+          {
+            "amount": 333333,
+            "due_date": "2023-03-01",
+            "status": "not_paid"
+          }
+      ]
+    }
+    ```
+* **Error Response:**
+  * **Code:** 404
+    * **Scenario:** Accepted loan request not found
+    * **Content:**
+      ```json
+      {
+          "status": "NOT_FOUND",
+          "code": 404,
+          "error": "accepted loan request not found"
       }
       ```

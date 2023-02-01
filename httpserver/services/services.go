@@ -7,5 +7,5 @@ import (
 )
 
 type LoanApplicationSvc interface {
-	CreateLoanApplication(ctx context.Context, application *request.CreateLoanApplication) *responses.ResponseMessage
+	CreateLoanApplication(ctx context.Context, application *request.CreateLoanApplication) *responses.Response
 }

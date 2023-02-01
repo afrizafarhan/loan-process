@@ -40,11 +40,7 @@ Create new loan application
         {
             "status": "UNPROCESSABLE_ENTITY",
             "code": 422,
-            "errors": [
-                {
-                    "ktp_number": "The ktp number already exist."
-                }
-            ]
+            "error": "ktp image extension not allowed"
         }
         ```
   * **Code:** 400
@@ -54,6 +50,22 @@ Create new loan application
           "status": "BAD_REQUEST",
           "code": 400,
           "message": "The loan application daily limit exceeded"
+      }
+      ```
+      * **Content:**
+      ```json
+      {
+          "status": "BAD_REQUEST",
+          "code": 400,
+          "message": "ktp number already exists"
+      }
+      ```
+      * **Content:**
+      ```json
+      {
+          "status": "BAD_REQUEST",
+          "code": 400,
+          "message": "email already exists"
       }
       ```
 

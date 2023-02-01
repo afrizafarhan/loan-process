@@ -1,6 +1,6 @@
 # Api Documentation Loan Process
 
-***POST /loan-applications***
+***POST /v1/loan-applications***
 ----
 Create new loan application
 * **Headers**  
@@ -57,7 +57,7 @@ Create new loan application
       }
       ```
 
-***Get /loan-applications***
+***Get /v1/loan-applications***
 ----
 Get list loan application
 * **Headers**  
@@ -83,7 +83,7 @@ Get list loan application
     }
     ```
 
-***POST /loan-applications/:customer_id/reapply***
+***POST /v1/loan-applications/:customer_id/reapply***
 ----
 Reapply new loan application
 * **URL Params**  

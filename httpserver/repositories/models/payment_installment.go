@@ -7,7 +7,7 @@ type PaymentInstallment struct {
 	CustomerId uint
 	Amount     uint
 	DueDate    time.Time
-	status     string
+	Status     string
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 }

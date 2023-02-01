@@ -11,13 +11,13 @@ type provinceRepo struct {
 	db *gorm.DB
 }
 
-func NewProvinceRepo(db *gorm.DB) repositories.Province {
+func NewProvinceRepo(db *gorm.DB) repositories.ProvinceRepo {
 	return &provinceRepo{db: db}
 }
 
 func (p *provinceRepo) FindProvinceByName(ctx context.Context, name string) (*models.Province, error) {
 	var province models.Province
-	err := p.db.WithContext(ctx).Where("name = ?", name).Find(province).Error
+	err := p.db.WithContext(ctx).Where("name = ?", name).Where("status = ?", true).Find(&province).Error
 	if err != nil {
 		return &province, err
 	}

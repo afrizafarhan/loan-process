@@ -26,3 +26,9 @@ func (c *customerRepo) FindCustomerByKtpNumber(ctx context.Context, ktpNumber st
 	err := c.db.WithContext(ctx).Where("ktp_number = ?", ktpNumber).Take(customer).Error
 	return customer, err
 }
+
+func (c *customerRepo) FindCustomerByEmail(ctx context.Context, email string) (*models.Customer, error) {
+	customer := new(models.Customer)
+	err := c.db.WithContext(ctx).Where("email = ?", email).Take(customer).Error
+	return customer, err
+}

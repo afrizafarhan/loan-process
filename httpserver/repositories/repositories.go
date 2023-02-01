@@ -18,7 +18,7 @@ type CustomerLoanRequest interface {
 }
 
 type Province interface {
-	FindProvinceStatusActive(ctx context.Context) ([]models.Province, error)
+	FindProvinceByName(ctx context.Context, name string) (*models.Province, error)
 }
 
 type DailyLoanRequest interface {

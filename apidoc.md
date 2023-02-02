@@ -120,7 +120,7 @@ Reapply new loan application
       {
           "status": "BAD_REQUEST",
           "code": 400,
-          "error": "The loan application daily limit exceeded"
+          "error": "the loan application daily limit exceeded"
       }
       ```
     * **Scenario:** Customer already have accepted loan

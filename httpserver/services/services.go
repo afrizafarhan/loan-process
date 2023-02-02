@@ -13,3 +13,7 @@ type LoanApplicationSvc interface {
 	ReapplyLoanApplication(ctx context.Context, customerId uint, application *request.ReapplyLoanApplication) *responses.Response
 	createCustomerLoanRequest(ctx context.Context, customer *models.Customer, loanAmount uint, tenor uint) error
 }
+
+type DailyLoanRequestSvc interface {
+	CheckDailyLoanRequest(ctx context.Context) int
+}

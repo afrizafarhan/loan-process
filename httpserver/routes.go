@@ -3,25 +3,28 @@ package httpserver
 import (
 	"github.com/gin-gonic/gin"
 	"loan_process/httpserver/controllers"
+	"loan_process/httpserver/middlewares"
 )
 
 type Router struct {
 	router          *gin.Engine
 	loanApplication controllers.LoanApplicationController
+	middleware      middlewares.CheckDailyRequestMiddleware
 }
 
-func NewRouter(engine *gin.Engine, loanApplication controllers.LoanApplicationController) *Router {
+func NewRouter(engine *gin.Engine, loanApplication controllers.LoanApplicationController, middleware middlewares.CheckDailyRequestMiddleware) *Router {
 	return &Router{
 		router:          engine,
 		loanApplication: loanApplication,
+		middleware:      middleware,
 	}
 }
 
 func (r *Router) SetRouter() *Router {
 	r.router.Static("/resources/", "./resources")
 	r.router.Use(cors)
-	r.router.POST("/v1/loan-applications", r.loanApplication.Create)
-	r.router.POST("/v1/loan-applications/:customerId/reapply", r.loanApplication.ReapplyLoanApplication)
+	r.router.POST("/v1/loan-applications", r.middleware.CheckDailyRequest(), r.loanApplication.Create)
+	r.router.POST("/v1/loan-applications/:customerId/reapply", r.middleware.CheckDailyRequest(), r.loanApplication.ReapplyLoanApplication)
 	r.router.GET("/v1/loan-applications", r.loanApplication.GetLoanApplications)
 	return r
 }

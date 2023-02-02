@@ -10,6 +10,7 @@ import (
 	"loan_process/config"
 	"loan_process/httpserver"
 	"loan_process/httpserver/controllers"
+	"loan_process/httpserver/middlewares"
 	repo "loan_process/httpserver/repositories/gorm"
 	"loan_process/httpserver/services"
 	"mime/multipart"
@@ -31,8 +32,10 @@ func setupApp(engine *gin.Engine, db *gorm.DB) {
 	paymentInstalment := repo.NewPaymentInstallmentRepo(db)
 	//service
 	service := services.NewLoanApplicationSvc(customer, province, loanRequest, dailyLoan, paymentInstalment)
+	dailyLoanSvc := services.NewDailyLoanRequestSvc(dailyLoan)
 	controller := controllers.NewLoanApplicationController(service)
-	router := httpserver.NewRouter(engine, controller)
+	middleware := middlewares.NewCheckDailyRequestMiddleware(dailyLoanSvc)
+	router := httpserver.NewRouter(engine, controller, middleware)
 	router.SetRouter()
 }
 
@@ -49,6 +52,7 @@ func TestLoanApplication_BadRequestNotGivingPayload(t *testing.T) {
 	db, _ := config.ConnectPostgresGORMTest()
 	setupApp(router, db)
 	truncateCustomer(db)
+	truncateDailyLoan(db)
 
 	w := httptest.NewRecorder()
 	body := strings.NewReader(``)
@@ -81,6 +85,7 @@ func TestLoanApplication_CreateValidateFailed(t *testing.T) {
 	db, _ := config.ConnectPostgresGORMTest()
 	setupApp(router, db)
 	truncateCustomer(db)
+	truncateDailyLoan(db)
 
 	var payload = map[string]string{
 		"full_name":        "Farhan",
@@ -118,6 +123,7 @@ func TestLoanApplication_CreateFailedCauseUnderAge(t *testing.T) {
 	db, _ := config.ConnectPostgresGORMTest()
 	setupApp(router, db)
 	truncateCustomer(db)
+	truncateDailyLoan(db)
 
 	var payload = map[string]string{
 		"full_name":        "Farhan",
@@ -156,6 +162,7 @@ func TestLoanApplication_CreateFailedCauseProvinceNotFound(t *testing.T) {
 	db, _ := config.ConnectPostgresGORMTest()
 	setupApp(router, db)
 	truncateCustomer(db)
+	truncateDailyLoan(db)
 
 	var payload = map[string]string{
 		"full_name":        "Farhan",
@@ -194,6 +201,7 @@ func TestLoanApplication_CreateFailedCauseImageExt(t *testing.T) {
 	db, _ := config.ConnectPostgresGORMTest()
 	setupApp(router, db)
 	truncateCustomer(db)
+	truncateDailyLoan(db)
 
 	var payload = map[string]string{
 		"full_name":        "Farhan",
@@ -232,6 +240,7 @@ func TestLoanApplication_CreateSuccess(t *testing.T) {
 	db, _ := config.ConnectPostgresGORMTest()
 	setupApp(router, db)
 	truncateCustomer(db)
+	truncateDailyLoan(db)
 
 	var payload = map[string]string{
 		"full_name":        "Farhan",
@@ -265,10 +274,50 @@ func TestLoanApplication_CreateSuccess(t *testing.T) {
 	assert.Equal(t, "Success create loan application", responseBody["message"])
 }
 
+func TestLoanApplication_CreateBadRequestCauseDailyLoanRequestExcedeed(t *testing.T) {
+	router := gin.Default()
+	db, _ := config.ConnectPostgresGORMTest()
+	setupApp(router, db)
+	truncateDailyLoan(db)
+	createDailyLoanRequest(db, 50)
+
+	var payload = map[string]string{
+		"full_name":        "Farhan",
+		"ktp_number":       "1234567890123456",
+		"gender":           "male",
+		"date_of_birth":    "2001-01-01",
+		"address":          "Jl. Test",
+		"phone_number":     "08123456890",
+		"email":            "farhan@gmail.com",
+		"nationality":      "indonesia",
+		"address_province": "SUMATERA UTARA",
+		"loan_amount":      "1000000",
+		"tenor":            "3",
+	}
+
+	body := new(bytes.Buffer)
+	writer := multipart.NewWriter(body)
+	createPayload(writer, &payload, false)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/v1/loan-applications", body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	router.ServeHTTP(w, req)
+
+	response, _ := io.ReadAll(w.Body)
+	var responseBody map[string]interface{}
+	json.Unmarshal(response, &responseBody)
+	assert.Equal(t, 400, w.Code)
+	assert.Equal(t, "BAD_REQUEST", responseBody["status"])
+	assert.Equal(t, 400, int(responseBody["code"].(float64)))
+	assert.Equal(t, "the loan application daily limit exceeded", responseBody["error"])
+}
+
 func TestLoanApplication_CreateFailedKtpNumberAlreadyExists(t *testing.T) {
 	router := gin.Default()
 	db, _ := config.ConnectPostgresGORMTest()
 	setupApp(router, db)
+	truncateDailyLoan(db)
 
 	var payload = map[string]string{
 		"full_name":        "Farhan",
@@ -306,6 +355,7 @@ func TestLoanApplication_CreateFailedEmailAlreadyExists(t *testing.T) {
 	router := gin.Default()
 	db, _ := config.ConnectPostgresGORMTest()
 	setupApp(router, db)
+	truncateDailyLoan(db)
 
 	var payload = map[string]string{
 		"full_name":        "Farhan",
@@ -343,6 +393,7 @@ func TestLoanApplication_GetLoanApplicationSuccess(t *testing.T) {
 	router := gin.Default()
 	db, _ := config.ConnectPostgresGORMTest()
 	setupApp(router, db)
+	truncateDailyLoan(db)
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/loan-applications", nil)
@@ -368,24 +419,23 @@ func TestLoanApplication_GetLoanReApplyFailedCauseDailyLimit(t *testing.T) {
 	db, _ := config.ConnectPostgresGORMTest()
 	setupApp(router, db)
 	truncateCustomer(db)
+	truncateDailyLoan(db)
+	customer, _ := createCustomerWithCustomerLoanRequest(db, "rejected")
+	createDailyLoanRequest(db, 50)
 
+	body := strings.NewReader(`{"loan_amount":1000000,"tenor":6}`)
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/v1/loan-applications", nil)
+	req, _ := http.NewRequest("POST", "/v1/loan-applications/"+strconv.Itoa(int(customer.Id))+"/reapply", body)
+	req.Header.Set("Content-Type", "application/json")
 	router.ServeHTTP(w, req)
 
 	response, _ := io.ReadAll(w.Body)
 	var responseBody map[string]interface{}
 	json.Unmarshal(response, &responseBody)
-	var loanApplications = responseBody["data"].([]interface{})
-	assert.Equal(t, 200, w.Code)
-	assert.Equal(t, "OK", responseBody["status"])
-	assert.Equal(t, 200, int(responseBody["code"].(float64)))
-	loanApplications1 := loanApplications[0].(map[string]interface{})
-	assert.Equal(t, "Farhan", loanApplications1["full_name"])
-	assert.Equal(t, "farhan@gmail.com", loanApplications1["email"])
-	assert.Equal(t, "1234567890123456", loanApplications1["ktp_number"])
-	assert.Equal(t, 1000000, int(loanApplications1["loan_amount"].(float64)))
-	assert.Equal(t, 3, int(loanApplications1["tenor"].(float64)))
+	assert.Equal(t, 400, w.Code)
+	assert.Equal(t, "BAD_REQUEST", responseBody["status"])
+	assert.Equal(t, 400, int(responseBody["code"].(float64)))
+	assert.Equal(t, "the loan application daily limit exceeded", responseBody["error"])
 }
 
 func TestLoanApplication_PostLoanReApplyFailedCauseAlreadyAcceptedLoan(t *testing.T) {
@@ -393,6 +443,7 @@ func TestLoanApplication_PostLoanReApplyFailedCauseAlreadyAcceptedLoan(t *testin
 	db, _ := config.ConnectPostgresGORMTest()
 	setupApp(router, db)
 	truncateCustomer(db)
+	truncateDailyLoan(db)
 	customer, _ := createCustomerWithCustomerLoanRequest(db, "accepted")
 
 	body := strings.NewReader(`{"loan_amount":1000000,"tenor":6}`)
@@ -415,6 +466,7 @@ func TestLoanApplication_PostLoanReApplySuccess(t *testing.T) {
 	db, _ := config.ConnectPostgresGORMTest()
 	setupApp(router, db)
 	truncateCustomer(db)
+	truncateDailyLoan(db)
 	customer, _ := createCustomerWithCustomerLoanRequest(db, "rejected")
 
 	w := httptest.NewRecorder()

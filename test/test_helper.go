@@ -38,3 +38,14 @@ func createCustomerWithCustomerLoanRequest(db *gorm.DB, status string) (*models.
 	customerLoanRequestRepo.SaveLoanRequest(context.Background(), &loanRequest)
 	return &customer, &loanRequest
 }
+
+func createDailyLoanRequest(db *gorm.DB, request uint) {
+	dailyLoan := models.DailyLoanRequest{
+		CurrentDateRequest: time.Now(),
+		Request:            request,
+		CreatedAt:          time.Now(),
+		UpdatedAt:          time.Now(),
+	}
+	dailyLoanRepo := gorm2.NewDailyLoanRequestRepo(db)
+	dailyLoanRepo.SaveDailyLoanRequest(context.Background(), &dailyLoan)
+}

@@ -129,7 +129,7 @@ Reapply new loan application
       {
           "status": "BAD_REQUEST",
           "code": 400,
-          "error": "The customer already have accepted loan"
+          "error": "the customer already have accepted loan"
       }
       ```
 

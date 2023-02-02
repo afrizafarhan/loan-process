@@ -59,10 +59,6 @@ func (l *loanApplicationSvc) CreateLoanApplication(ctx context.Context, applicat
 		return responses.ErrorResponse(responses.M_UNPROCESSABLE_ENTITY, http.StatusUnprocessableEntity, errors.New("the province not allowed to loan application request"))
 	}
 
-	if !common.InArray(common.Tenor, application.Tenor) {
-		return responses.ErrorResponse(responses.M_UNPROCESSABLE_ENTITY, http.StatusUnprocessableEntity, errors.New("the tenor not in right value"))
-	}
-
 	ktpImageExt := common.GetImageExtension(application.KtpImage.Filename)
 	if !common.InAllowedImageExtension(ktpImageExt) {
 		return responses.ErrorResponse(responses.M_UNPROCESSABLE_ENTITY, http.StatusUnprocessableEntity, errors.New("ktp image extension not allowed"))
@@ -93,6 +89,7 @@ func (l *loanApplicationSvc) CreateLoanApplication(ctx context.Context, applicat
 		Nationality: application.Nationality,
 		ProvinceId:  province.Id,
 		KtpImage:    ktpFileName,
+		Address:     application.Address,
 		SelfieImage: selfieFileName,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
@@ -103,18 +100,64 @@ func (l *loanApplicationSvc) CreateLoanApplication(ctx context.Context, applicat
 		return responses.ErrorResponse(responses.M_INTERNAL_SERVER_ERROR, http.StatusInternalServerError, errors.New("internal server error"))
 	}
 
+	err = l.createCustomerLoanRequest(ctx, &customer, application.LoanAmount, application.Tenor)
+	if err != nil {
+		return responses.ErrorResponse(responses.M_INTERNAL_SERVER_ERROR, http.StatusInternalServerError, errors.New("internal server error"))
+	}
+
+	return responses.SuccessResponse(responses.M_CREATED, http.StatusCreated, "Success create loan application")
+}
+
+func (l *loanApplicationSvc) GetLoanApplication(ctx context.Context) *responses.Response {
+	loanRequest, err := l.loanRequest.FindAll(ctx)
+	if err != nil {
+		return responses.ErrorResponse(responses.M_INTERNAL_SERVER_ERROR, http.StatusInternalServerError, errors.New("internal server error"))
+	}
+	var loanApplications []responses.CustomerLoanRequestResponses
+	for _, val := range loanRequest {
+		loanApplications = append(loanApplications, responses.CustomerLoanRequestResponses{
+			Id:         val.Id,
+			FullName:   val.Customer.FullName,
+			KtpNumber:  val.Customer.KtpNumber,
+			Email:      val.Customer.Email,
+			LoanAmount: val.Amount,
+			Tenor:      val.Tenor,
+			Status:     val.Status,
+		})
+	}
+	return responses.SuccessResponseWithData(responses.M_OK, http.StatusOK, loanApplications)
+}
+
+func (l *loanApplicationSvc) ReapplyLoanApplication(ctx context.Context, customerId uint, application *request.ReapplyLoanApplication) *responses.Response {
+	_, err := l.loanRequest.FindAcceptedLoanRequestByCustomer(ctx, customerId)
+	if err == nil {
+		return responses.ErrorResponse(responses.M_BAD_REQUEST, http.StatusBadRequest, errors.New("the customer already have accepted loan"))
+	}
+	customer, err := l.customer.FindCustomerById(ctx, customerId)
+	if err != nil {
+		return responses.ErrorResponse(responses.M_INTERNAL_SERVER_ERROR, http.StatusInternalServerError, errors.New("internal server error"))
+	}
+
+	err = l.createCustomerLoanRequest(ctx, customer, application.LoanAmount, application.Tenor)
+	if err != nil {
+		return responses.ErrorResponse(responses.M_INTERNAL_SERVER_ERROR, http.StatusInternalServerError, errors.New("internal server error"))
+	}
+	return responses.SuccessResponse(responses.M_OK, http.StatusOK, "Success reapply loan application")
+}
+
+func (l *loanApplicationSvc) createCustomerLoanRequest(ctx context.Context, customer *models.Customer, loanAmount uint, tenor uint) error {
 	customerLoanRequest := models.CustomerLoanRequest{
 		CustomerId: customer.Id,
-		Amount:     application.LoanAmount,
-		Tenor:      application.Tenor,
+		Amount:     loanAmount,
+		Tenor:      tenor,
 		Status:     helpers.RandomSelectArrayString(common.StatusLoanRequest),
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 	}
 
-	err = l.loanRequest.SaveLoanRequest(ctx, &customerLoanRequest)
+	err := l.loanRequest.SaveLoanRequest(ctx, &customerLoanRequest)
 	if err != nil {
-		return responses.ErrorResponse(responses.M_INTERNAL_SERVER_ERROR, http.StatusInternalServerError, errors.New("internal server error"))
+		return err
 	}
 
 	if customerLoanRequest.Status == common.StatusLoanRequest[0] {
@@ -141,7 +184,7 @@ func (l *loanApplicationSvc) CreateLoanApplication(ctx context.Context, applicat
 		}
 		err = l.paymentInstalment.SavePaymentInstalment(ctx, &instalments)
 		if err != nil {
-			return responses.ErrorResponse(responses.M_INTERNAL_SERVER_ERROR, http.StatusInternalServerError, errors.New("internal server error"))
+			return err
 		}
 	}
 
@@ -150,8 +193,7 @@ func (l *loanApplicationSvc) CreateLoanApplication(ctx context.Context, applicat
 		dailyRequest.Request += 1
 		err = l.dailyLoan.UpdateDailyLoanRequestById(ctx, dailyRequest)
 		if err != nil {
-			panic(err)
-			return responses.ErrorResponse(responses.M_INTERNAL_SERVER_ERROR, http.StatusInternalServerError, errors.New("internal server error"))
+			return err
 		}
 	} else {
 		dailyLoanRequest := models.DailyLoanRequest{
@@ -162,29 +204,8 @@ func (l *loanApplicationSvc) CreateLoanApplication(ctx context.Context, applicat
 		}
 		err = l.dailyLoan.SaveDailyLoanRequest(ctx, &dailyLoanRequest)
 		if err != nil {
-			return responses.ErrorResponse(responses.M_INTERNAL_SERVER_ERROR, http.StatusInternalServerError, errors.New("internal server error"))
+			return err
 		}
 	}
-
-	return responses.SuccessResponse(responses.M_CREATED, http.StatusCreated, "Success create loan application")
-}
-
-func (l *loanApplicationSvc) GetLoanApplication(ctx context.Context) *responses.Response {
-	loanRequest, err := l.loanRequest.FindAll(ctx)
-	if err != nil {
-		return responses.ErrorResponse(responses.M_INTERNAL_SERVER_ERROR, http.StatusInternalServerError, errors.New("internal server error"))
-	}
-	var loanApplications []responses.CustomerLoanRequestResponses
-	for _, val := range loanRequest {
-		loanApplications = append(loanApplications, responses.CustomerLoanRequestResponses{
-			Id:         val.Id,
-			FullName:   val.Customer.FullName,
-			KtpNumber:  val.Customer.KtpNumber,
-			Email:      val.Customer.Email,
-			LoanAmount: val.Amount,
-			Tenor:      val.Tenor,
-			Status:     val.Status,
-		})
-	}
-	return responses.SuccessResponseWithData(responses.M_OK, http.StatusOK, loanApplications)
+	return nil
 }

@@ -21,8 +21,11 @@ func (c *customerLoanRequestRepo) SaveLoanRequest(ctx context.Context, request *
 
 func (c *customerLoanRequestRepo) FindAcceptedLoanRequestByCustomer(ctx context.Context, customerId uint) (*models.CustomerLoanRequest, error) {
 	loanRequest := new(models.CustomerLoanRequest)
-	err := c.db.WithContext(ctx).Where("customer_id = ?", customerId).Where("status = ?", "accepted").Find(loanRequest).Error
-	return loanRequest, err
+	err := c.db.WithContext(ctx).Where("customer_id = ?", customerId).Where("status = ?", "accepted").Take(loanRequest).Error
+	if err != nil {
+		return nil, err
+	}
+	return loanRequest, nil
 }
 
 func (c *customerLoanRequestRepo) FindAll(ctx context.Context) ([]models.CustomerLoanRequest, error) {

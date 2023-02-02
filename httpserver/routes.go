@@ -21,6 +21,7 @@ func (r *Router) SetRouter() *Router {
 	r.router.Static("/resources/", "./resources")
 	r.router.Use(cors)
 	r.router.POST("/v1/loan-applications", r.loanApplication.Create)
+	r.router.POST("/v1/loan-applications/:customerId/reapply", r.loanApplication.ReapplyLoanApplication)
 	r.router.GET("/v1/loan-applications", r.loanApplication.GetLoanApplications)
 	return r
 }

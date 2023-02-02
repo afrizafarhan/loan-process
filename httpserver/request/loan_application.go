@@ -15,5 +15,10 @@ type CreateLoanApplication struct {
 	KtpImage        *multipart.FileHeader `form:"ktp_image" validate:"required"`
 	SelfieImage     *multipart.FileHeader `form:"selfie_image" validate:"required"`
 	LoanAmount      uint                  `form:"loan_amount" validate:"required,min=1000000,max=10000000"`
-	Tenor           uint                  `form:"tenor" validate:"required"`
+	Tenor           uint                  `form:"tenor" validate:"required,oneof=3 6 9 12 24"`
+}
+
+type ReapplyLoanApplication struct {
+	LoanAmount uint `json:"loan_amount" validate:"required,min=1000000,max=10000000"`
+	Tenor      uint `json:"tenor" validate:"required,oneof=3 6 9 12 24"`
 }

@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"loan_process/httpserver/repositories/models"
 	"loan_process/httpserver/request"
 	"loan_process/httpserver/responses"
 )
@@ -9,4 +10,6 @@ import (
 type LoanApplicationSvc interface {
 	CreateLoanApplication(ctx context.Context, application *request.CreateLoanApplication) *responses.Response
 	GetLoanApplication(ctx context.Context) *responses.Response
+	ReapplyLoanApplication(ctx context.Context, customerId uint, application *request.ReapplyLoanApplication) *responses.Response
+	createCustomerLoanRequest(ctx context.Context, customer *models.Customer, loanAmount uint, tenor uint) error
 }

@@ -6,6 +6,7 @@ import (
 	"loan_process/exceptions"
 	"loan_process/httpserver/request"
 	"loan_process/httpserver/services"
+	"strconv"
 )
 
 type loanApplicationController struct {
@@ -36,5 +37,26 @@ func (l *loanApplicationController) Create(ctx *gin.Context) {
 
 func (l *loanApplicationController) GetLoanApplications(ctx *gin.Context) {
 	response := l.svc.GetLoanApplication(ctx)
+	WriteJsonResponse(ctx, response)
+}
+
+func (l *loanApplicationController) ReapplyLoanApplication(ctx *gin.Context) {
+	customerId, err := strconv.Atoi(ctx.Param("customerId"))
+	if err != nil {
+		exceptions.ValidationError(ctx, err)
+		return
+	}
+	var req request.ReapplyLoanApplication
+	err = ctx.ShouldBind(&req)
+	if err != nil {
+		exceptions.ValidationError(ctx, err)
+		return
+	}
+	err = validator.New().Struct(req)
+	if err != nil {
+		exceptions.ValidationError(ctx, err)
+		return
+	}
+	response := l.svc.ReapplyLoanApplication(ctx, uint(customerId), &req)
 	WriteJsonResponse(ctx, response)
 }

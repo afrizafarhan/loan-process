@@ -58,3 +58,22 @@ func (c *customerSvc) GetDetailCustomer(ctx context.Context, id uint) *responses
 	}
 	return responses.SuccessResponseWithData(responses.M_OK, http.StatusOK, response)
 }
+
+func (c *customerSvc) GetCustomerLoanApplications(ctx context.Context, id uint) *responses.Response {
+	customer, err := c.customer.FindCustomerById(ctx, id)
+	if err != nil {
+		return responses.ErrorResponse(responses.M_NOT_FOUND, http.StatusNotFound, errors.New("customer not found"))
+	}
+	var customerLoanRequest []responses.CustomerLoanRequest
+	for _, val := range customer.CustomerLoanRequest {
+		customerLoanRequest = append(customerLoanRequest, responses.CustomerLoanRequest{
+			Id:        val.Id,
+			Amount:    val.Amount,
+			Tenor:     val.Tenor,
+			Status:    val.Status,
+			CreatedAt: val.CreatedAt,
+			UpdatedAt: val.UpdatedAt,
+		})
+	}
+	return responses.SuccessResponseWithData(responses.M_OK, http.StatusOK, customerLoanRequest)
+}

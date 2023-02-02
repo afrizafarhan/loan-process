@@ -13,4 +13,5 @@ type LoanApplicationController interface {
 type CustomerController interface {
 	GetCustomers(ctx *gin.Context)
 	GetDetailCustomer(ctx *gin.Context)
+	GetCustomerLoanApplications(ctx *gin.Context)
 }

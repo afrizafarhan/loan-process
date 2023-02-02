@@ -35,7 +35,7 @@ func (c *customerRepo) FindCustomerByEmail(ctx context.Context, email string) (*
 
 func (c *customerRepo) FindCustomerById(ctx context.Context, id uint) (*models.Customer, error) {
 	customer := new(models.Customer)
-	err := c.db.WithContext(ctx).Preload("Province").Where("id = ?", id).Take(customer).Error
+	err := c.db.WithContext(ctx).Preload("CustomerLoanRequest").Preload("Province").Where("id = ?", id).Take(customer).Error
 	if err != nil {
 		return nil, err
 	}

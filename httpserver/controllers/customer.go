@@ -29,3 +29,13 @@ func (c *customerController) GetDetailCustomer(ctx *gin.Context) {
 	response := c.svc.GetDetailCustomer(ctx, uint(customerId))
 	WriteJsonResponse(ctx, response)
 }
+
+func (c *customerController) GetCustomerLoanApplications(ctx *gin.Context) {
+	customerId, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		exceptions.ValidationError(ctx, err)
+		return
+	}
+	response := c.svc.GetCustomerLoanApplications(ctx, uint(customerId))
+	WriteJsonResponse(ctx, response)
+}

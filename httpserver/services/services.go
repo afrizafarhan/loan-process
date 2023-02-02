@@ -21,4 +21,5 @@ type DailyLoanRequestSvc interface {
 type CustomerSvc interface {
 	GetCustomers(ctx context.Context) *responses.Response
 	GetDetailCustomer(ctx context.Context, id uint) *responses.Response
+	GetCustomerLoanApplications(ctx context.Context, id uint) *responses.Response
 }

@@ -32,6 +32,7 @@ func (r *Router) SetRouter() *Router {
 
 	r.router.GET("/v1/customers", r.customer.GetCustomers)
 	r.router.GET("/v1/customers/:id", r.customer.GetDetailCustomer)
+	r.router.GET("/v1/customers/:id/loan-applications", r.customer.GetCustomerLoanApplications)
 
 	return r
 }

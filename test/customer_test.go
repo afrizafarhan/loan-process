@@ -117,3 +117,51 @@ func TestCustomer_GetDetailCustomerSuccess(t *testing.T) {
 		formatDate("2006-01-01 00:00:00", loanApplications["updated_at"].(string)),
 	)
 }
+
+func TestCustomer_GetLoanApplicationsCustomerNotFound(t *testing.T) {
+	router := gin.Default()
+	db, _ := config.ConnectPostgresGORMTest()
+	setupApp(router, db)
+	truncateCustomer(db)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/v1/customers/999/loan-applications", nil)
+	req.Header.Add("Content-type", "application/json")
+	router.ServeHTTP(w, req)
+
+	response, _ := io.ReadAll(w.Body)
+	var responseBody map[string]interface{}
+	json.Unmarshal(response, &responseBody)
+	assert.Equal(t, 404, w.Code)
+	assert.Equal(t, "NOT_FOUND", responseBody["status"])
+	assert.Equal(t, 404, int(responseBody["code"].(float64)))
+	assert.Equal(t, "customer not found", responseBody["error"])
+}
+
+func TestCustomer_GetLoanApplicationCustomerSuccess(t *testing.T) {
+	router := gin.Default()
+	db, _ := config.ConnectPostgresGORMTest()
+	setupApp(router, db)
+	truncateCustomer(db)
+	customer, _ := createCustomerWithCustomerLoanRequest(db, "accepted")
+	customerDetail := GetCustomerById(db, customer.Id)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/v1/customers/"+strconv.Itoa(int(customer.Id))+"/loan-applications", nil)
+	req.Header.Add("Content-type", "application/json")
+	router.ServeHTTP(w, req)
+
+	response, _ := io.ReadAll(w.Body)
+	var responseBody map[string]interface{}
+	json.Unmarshal(response, &responseBody)
+
+	assert.Equal(t, 200, w.Code)
+	assert.Equal(t, "OK", responseBody["status"])
+	assert.Equal(t, 200, int(responseBody["code"].(float64)))
+	var customers = responseBody["data"].([]interface{})
+	customer1 := customers[0].(map[string]interface{})
+	assert.Equal(t, int(customerDetail.CustomerLoanRequest[0].Id), int(customer1["id"].(float64)))
+	assert.Equal(t, int(customerDetail.CustomerLoanRequest[0].Amount), int(customer1["amount"].(float64)))
+	assert.Equal(t, int(customerDetail.CustomerLoanRequest[0].Tenor), int(customer1["tenor"].(float64)))
+	assert.Equal(t, customerDetail.CustomerLoanRequest[0].Status, customer1["status"])
+}

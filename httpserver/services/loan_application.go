@@ -130,38 +130,39 @@ func (l *loanApplicationSvc) CreateLoanApplication(ctx context.Context, applicat
 			}
 			dueDate := time.Date(year, month, day, 0, 0, 0, 0, time.Local)
 			instalments = append(instalments, models.PaymentInstallment{
-				CustomerId: customer.Id,
-				Amount:     installmentAmount,
-				Status:     "not_paid",
-				DueDate:    dueDate,
-				CreatedAt:  time.Now(),
-				UpdatedAt:  time.Now(),
+				CustomerId:            customer.Id,
+				CustomerLoanRequestId: customerLoanRequest.Id,
+				Amount:                installmentAmount,
+				Status:                "not_paid",
+				DueDate:               dueDate,
+				CreatedAt:             time.Now(),
+				UpdatedAt:             time.Now(),
 			})
 		}
 		err = l.paymentInstalment.SavePaymentInstalment(ctx, &instalments)
 		if err != nil {
 			return responses.ErrorResponse(responses.M_INTERNAL_SERVER_ERROR, http.StatusInternalServerError, errors.New("internal server error"))
 		}
+	}
 
-		dailyRequest, err := l.dailyLoan.FindDailyLoanRequestByDate(ctx, time.Now())
-		if err == nil {
-			dailyRequest.Request += 1
-			err = l.dailyLoan.UpdateDailyLoanRequestById(ctx, dailyRequest)
-			if err != nil {
-				panic(err)
-				return responses.ErrorResponse(responses.M_INTERNAL_SERVER_ERROR, http.StatusInternalServerError, errors.New("internal server error"))
-			}
-		} else {
-			dailyLoanRequest := models.DailyLoanRequest{
-				CurrentDateRequest: time.Now(),
-				Request:            1,
-				CreatedAt:          time.Now(),
-				UpdatedAt:          time.Now(),
-			}
-			err = l.dailyLoan.SaveDailyLoanRequest(ctx, &dailyLoanRequest)
-			if err != nil {
-				return responses.ErrorResponse(responses.M_INTERNAL_SERVER_ERROR, http.StatusInternalServerError, errors.New("internal server error"))
-			}
+	dailyRequest, err := l.dailyLoan.FindDailyLoanRequestByDate(ctx, time.Now())
+	if err == nil {
+		dailyRequest.Request += 1
+		err = l.dailyLoan.UpdateDailyLoanRequestById(ctx, dailyRequest)
+		if err != nil {
+			panic(err)
+			return responses.ErrorResponse(responses.M_INTERNAL_SERVER_ERROR, http.StatusInternalServerError, errors.New("internal server error"))
+		}
+	} else {
+		dailyLoanRequest := models.DailyLoanRequest{
+			CurrentDateRequest: time.Now(),
+			Request:            1,
+			CreatedAt:          time.Now(),
+			UpdatedAt:          time.Now(),
+		}
+		err = l.dailyLoan.SaveDailyLoanRequest(ctx, &dailyLoanRequest)
+		if err != nil {
+			return responses.ErrorResponse(responses.M_INTERNAL_SERVER_ERROR, http.StatusInternalServerError, errors.New("internal server error"))
 		}
 	}
 

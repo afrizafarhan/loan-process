@@ -1,6 +1,9 @@
 package helpers
 
-import "math/rand"
+import (
+	"math/rand"
+	"time"
+)
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456780")
 
@@ -13,5 +16,6 @@ func RandomString(n int) string {
 }
 
 func RandomSelectArrayString(array []string) string {
-	return array[rand.Intn(len(array)-1)]
+	rand.Seed(time.Now().UnixNano())
+	return array[rand.Intn(len(array))]
 }

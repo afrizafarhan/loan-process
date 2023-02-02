@@ -2,9 +2,14 @@ package test
 
 import (
 	"context"
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"loan_process/httpserver"
+	"loan_process/httpserver/controllers"
+	"loan_process/httpserver/middlewares"
 	gorm2 "loan_process/httpserver/repositories/gorm"
 	"loan_process/httpserver/repositories/models"
+	"loan_process/httpserver/services"
 	"time"
 )
 
@@ -48,4 +53,28 @@ func createDailyLoanRequest(db *gorm.DB, request uint) {
 	}
 	dailyLoanRepo := gorm2.NewDailyLoanRequestRepo(db)
 	dailyLoanRepo.SaveDailyLoanRequest(context.Background(), &dailyLoan)
+}
+
+func setupApp(engine *gin.Engine, db *gorm.DB) {
+	//repo
+	customer := gorm2.NewCustomerRepo(db)
+	province := gorm2.NewProvinceRepo(db)
+	loanRequest := gorm2.NewCustomerLoanRequestRepo(db)
+	dailyLoan := gorm2.NewDailyLoanRequestRepo(db)
+	paymentInstalment := gorm2.NewPaymentInstallmentRepo(db)
+	//service
+	service := services.NewLoanApplicationSvc(customer, province, loanRequest, dailyLoan, paymentInstalment)
+	dailyLoanSvc := services.NewDailyLoanRequestSvc(dailyLoan)
+	controller := controllers.NewLoanApplicationController(service)
+	middleware := middlewares.NewCheckDailyRequestMiddleware(dailyLoanSvc)
+	router := httpserver.NewRouter(engine, controller, middleware)
+	router.SetRouter()
+}
+
+func truncateCustomer(db *gorm.DB) {
+	db.Exec("TRUNCATE customers CASCADE")
+}
+
+func truncateDailyLoan(db *gorm.DB) {
+	db.Exec("TRUNCATE daily_loan_requests CASCADE")
 }

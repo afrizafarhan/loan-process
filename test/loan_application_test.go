@@ -5,14 +5,8 @@ import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
-	"gorm.io/gorm"
 	"io"
 	"loan_process/config"
-	"loan_process/httpserver"
-	"loan_process/httpserver/controllers"
-	"loan_process/httpserver/middlewares"
-	repo "loan_process/httpserver/repositories/gorm"
-	"loan_process/httpserver/services"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -22,30 +16,6 @@ import (
 	"strings"
 	"testing"
 )
-
-func setupApp(engine *gin.Engine, db *gorm.DB) {
-	//repo
-	customer := repo.NewCustomerRepo(db)
-	province := repo.NewProvinceRepo(db)
-	loanRequest := repo.NewCustomerLoanRequestRepo(db)
-	dailyLoan := repo.NewDailyLoanRequestRepo(db)
-	paymentInstalment := repo.NewPaymentInstallmentRepo(db)
-	//service
-	service := services.NewLoanApplicationSvc(customer, province, loanRequest, dailyLoan, paymentInstalment)
-	dailyLoanSvc := services.NewDailyLoanRequestSvc(dailyLoan)
-	controller := controllers.NewLoanApplicationController(service)
-	middleware := middlewares.NewCheckDailyRequestMiddleware(dailyLoanSvc)
-	router := httpserver.NewRouter(engine, controller, middleware)
-	router.SetRouter()
-}
-
-func truncateCustomer(db *gorm.DB) {
-	db.Exec("TRUNCATE customers CASCADE")
-}
-
-func truncateDailyLoan(db *gorm.DB) {
-	db.Exec("TRUNCATE daily_loan_requests CASCADE")
-}
 
 func TestLoanApplication_BadRequestNotGivingPayload(t *testing.T) {
 	router := gin.Default()
@@ -436,6 +406,28 @@ func TestLoanApplication_GetLoanReApplyFailedCauseDailyLimit(t *testing.T) {
 	assert.Equal(t, "BAD_REQUEST", responseBody["status"])
 	assert.Equal(t, 400, int(responseBody["code"].(float64)))
 	assert.Equal(t, "the loan application daily limit exceeded", responseBody["error"])
+}
+
+func TestLoanApplication_PostLoanReApplyFailedCauseCustomerNotFound(t *testing.T) {
+	router := gin.Default()
+	db, _ := config.ConnectPostgresGORMTest()
+	setupApp(router, db)
+	truncateCustomer(db)
+	truncateDailyLoan(db)
+
+	body := strings.NewReader(`{"loan_amount":1000000,"tenor":6}`)
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/v1/loan-applications/999/reapply", body)
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	response, _ := io.ReadAll(w.Body)
+	var responseBody map[string]interface{}
+	json.Unmarshal(response, &responseBody)
+	assert.Equal(t, 404, w.Code)
+	assert.Equal(t, "NOT_FOUND", responseBody["status"])
+	assert.Equal(t, 404, int(responseBody["code"].(float64)))
+	assert.Equal(t, "customer not found", responseBody["error"])
 }
 
 func TestLoanApplication_PostLoanReApplyFailedCauseAlreadyAcceptedLoan(t *testing.T) {

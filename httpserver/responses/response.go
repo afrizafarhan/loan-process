@@ -14,6 +14,7 @@ const (
 	M_OK                    = "OK"
 	M_INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR"
 	M_UNPROCESSABLE_ENTITY  = "UNPROCESSABLE_ENTITY"
+	M_NOT_FOUND             = "NOT_FOUND"
 )
 
 func SuccessResponse(status string, code int, message string) *Response {

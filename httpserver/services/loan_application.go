@@ -129,13 +129,14 @@ func (l *loanApplicationSvc) GetLoanApplication(ctx context.Context) *responses.
 }
 
 func (l *loanApplicationSvc) ReapplyLoanApplication(ctx context.Context, customerId uint, application *request.ReapplyLoanApplication) *responses.Response {
-	_, err := l.loanRequest.FindAcceptedLoanRequestByCustomer(ctx, customerId)
-	if err == nil {
-		return responses.ErrorResponse(responses.M_BAD_REQUEST, http.StatusBadRequest, errors.New("the customer already have accepted loan"))
-	}
 	customer, err := l.customer.FindCustomerById(ctx, customerId)
 	if err != nil {
-		return responses.ErrorResponse(responses.M_INTERNAL_SERVER_ERROR, http.StatusInternalServerError, errors.New("internal server error"))
+		return responses.ErrorResponse(responses.M_NOT_FOUND, http.StatusNotFound, errors.New("customer not found"))
+	}
+
+	_, err = l.loanRequest.FindAcceptedLoanRequestByCustomer(ctx, customer.Id)
+	if err == nil {
+		return responses.ErrorResponse(responses.M_BAD_REQUEST, http.StatusBadRequest, errors.New("the customer already have accepted loan"))
 	}
 
 	err = l.createCustomerLoanRequest(ctx, customer, application.LoanAmount, application.Tenor)

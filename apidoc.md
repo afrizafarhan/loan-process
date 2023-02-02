@@ -159,6 +159,8 @@ Get list customers
 ***Get /v1/customers/:id***
 ----
 Get detail data customer
+* **URL Params**  
+  *Required:* `id=[uint]`
 * **Headers**  
   *Content-Type:* `application/json`
 * **Success Response:**
@@ -200,6 +202,8 @@ Get detail data customer
 ***Get /v1/customers/:id/loan-applications***
 ----
 Get detail data customer
+* **URL Params**  
+  *Required:* `id=[uint]`
 * **Headers**  
   *Content-Type:* `application/json`
 * **Success Response:**
@@ -211,12 +215,13 @@ Get detail data customer
         "code": 200,
         "data": [
           {
+            "id": 1,
             "amount": 1000000,
             "tenor": 3,
             "status": "accepted",
             "created_at": "2023-01-01",
             "updated_at": "2023-01-01"
-          },
+          }
       ]
     }
     ```
@@ -232,9 +237,11 @@ Get detail data customer
       }
       ```
 
-***Get /v1/payment-installments/:loan_request_id***
+***Get /v1/payment-installments/:customer_id***
 ----
 Get list installment for accepted loan application
+* **URL Params**  
+  *Required:* `customer_id=[uint]`
 * **Headers**  
   *Content-Type:* `application/json`
 * **Success Response:**
@@ -246,19 +253,28 @@ Get list installment for accepted loan application
         "code": 200,
         "data": [
           {
+            "id": 1,
             "amount": 333333,
             "due_date": "2023-01-01",
-            "status": "not_paid"
+            "status": "not_paid",
+            "created_at": "2023-01-01",
+            "updated_at": "2023-01-01"
           },
           {
+            "id": 2,
             "amount": 333333,
             "due_date": "2023-02-01",
-            "status": "not_paid"
+            "status": "not_paid",
+            "created_at": "2023-01-01",
+            "updated_at": "2023-01-01"
           },
           {
+            "id":3,
             "amount": 333333,
             "due_date": "2023-03-01",
-            "status": "not_paid"
+            "status": "not_paid",
+            "created_at": "2023-01-01",
+            "updated_at": "2023-01-01"
           }
       ]
     }

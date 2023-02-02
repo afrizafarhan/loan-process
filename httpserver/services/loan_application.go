@@ -168,3 +168,23 @@ func (l *loanApplicationSvc) CreateLoanApplication(ctx context.Context, applicat
 
 	return responses.SuccessResponse(responses.M_CREATED, http.StatusCreated, "Success create loan application")
 }
+
+func (l *loanApplicationSvc) GetLoanApplication(ctx context.Context) *responses.Response {
+	loanRequest, err := l.loanRequest.FindAll(ctx)
+	if err != nil {
+		return responses.ErrorResponse(responses.M_INTERNAL_SERVER_ERROR, http.StatusInternalServerError, errors.New("internal server error"))
+	}
+	var loanApplications []responses.CustomerLoanRequestResponses
+	for _, val := range loanRequest {
+		loanApplications = append(loanApplications, responses.CustomerLoanRequestResponses{
+			Id:         val.Id,
+			FullName:   val.Customer.FullName,
+			KtpNumber:  val.Customer.KtpNumber,
+			Email:      val.Customer.Email,
+			LoanAmount: val.Amount,
+			Tenor:      val.Tenor,
+			Status:     val.Status,
+		})
+	}
+	return responses.SuccessResponseWithData(responses.M_OK, http.StatusOK, loanApplications)
+}

@@ -28,7 +28,7 @@ func (c *customerLoanRequestRepo) FindAcceptedLoanRequestByCustomer(ctx context.
 func (c *customerLoanRequestRepo) FindAll(ctx context.Context) ([]models.CustomerLoanRequest, error) {
 	var customerLoanRequests []models.CustomerLoanRequest
 
-	if err := c.db.WithContext(ctx).Find(&customerLoanRequests).Error; err != nil {
+	if err := c.db.WithContext(ctx).Preload("Customer").Find(&customerLoanRequests).Error; err != nil {
 		return customerLoanRequests, err
 	}
 	return customerLoanRequests, nil

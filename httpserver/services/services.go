@@ -8,4 +8,5 @@ import (
 
 type LoanApplicationSvc interface {
 	CreateLoanApplication(ctx context.Context, application *request.CreateLoanApplication) *responses.Response
+	GetLoanApplication(ctx context.Context) *responses.Response
 }

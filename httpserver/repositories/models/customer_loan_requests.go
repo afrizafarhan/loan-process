@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type CustomerLoanRequest struct {
 	Id         uint
@@ -10,4 +12,5 @@ type CustomerLoanRequest struct {
 	Status     string
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
+	Customer   Customer `gorm:"foreignKey:CustomerId;references:Id"`
 }

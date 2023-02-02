@@ -21,9 +21,7 @@ func (r *Router) SetRouter() *Router {
 	r.router.Static("/resources/", "./resources")
 	r.router.Use(cors)
 	r.router.POST("/v1/loan-applications", r.loanApplication.Create)
-	r.router.GET("/v1/test", func(context *gin.Context) {
-		context.String(200, "PONG")
-	})
+	r.router.GET("/v1/loan-applications", r.loanApplication.GetLoanApplications)
 	return r
 }
 

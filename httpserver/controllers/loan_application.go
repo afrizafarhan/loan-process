@@ -33,3 +33,8 @@ func (l *loanApplicationController) Create(ctx *gin.Context) {
 	response := l.svc.CreateLoanApplication(ctx, &req)
 	WriteJsonResponse(ctx, response)
 }
+
+func (l *loanApplicationController) GetLoanApplications(ctx *gin.Context) {
+	response := l.svc.GetLoanApplication(ctx)
+	WriteJsonResponse(ctx, response)
+}

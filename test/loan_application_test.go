@@ -3,7 +3,6 @@ package test
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
@@ -55,7 +54,6 @@ func TestLoanApplication_BadRequestNotGivingPayload(t *testing.T) {
 	req, _ := http.NewRequest("POST", "/v1/loan-applications", body)
 	router.ServeHTTP(w, req)
 	assert.Equal(t, 422, w.Code)
-	fmt.Println(w.Body)
 }
 
 func createPayload(writer *multipart.Writer, payload *map[string]string, incorrect bool) {
@@ -375,4 +373,28 @@ func TestLoanApplication_CreateFailedEmailAlreadyExists(t *testing.T) {
 	assert.Equal(t, "BAD_REQUEST", responseBody["status"])
 	assert.Equal(t, 400, int(responseBody["code"].(float64)))
 	assert.Equal(t, "email already exist", responseBody["error"])
+}
+
+func TestLoanApplication_GetLoanApplicationSuccess(t *testing.T) {
+	router := gin.Default()
+	db, _ := config.ConnectPostgresGORMTest()
+	setupApp(router, db)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/v1/loan-applications", nil)
+	router.ServeHTTP(w, req)
+
+	response, _ := io.ReadAll(w.Body)
+	var responseBody map[string]interface{}
+	json.Unmarshal(response, &responseBody)
+	var loanApplications = responseBody["data"].([]interface{})
+	assert.Equal(t, 200, w.Code)
+	assert.Equal(t, "OK", responseBody["status"])
+	assert.Equal(t, 200, int(responseBody["code"].(float64)))
+	loanApplications1 := loanApplications[0].(map[string]interface{})
+	assert.Equal(t, "Farhan", loanApplications1["full_name"])
+	assert.Equal(t, "farhan@gmail.com", loanApplications1["email"])
+	assert.Equal(t, "1234567890123456", loanApplications1["ktp_number"])
+	assert.Equal(t, 1000000, int(loanApplications1["loan_amount"].(float64)))
+	assert.Equal(t, 3, int(loanApplications1["tenor"].(float64)))
 }

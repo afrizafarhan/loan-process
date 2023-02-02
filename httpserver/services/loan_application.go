@@ -9,7 +9,9 @@ import (
 	"loan_process/httpserver/repositories/models"
 	"loan_process/httpserver/request"
 	"loan_process/httpserver/responses"
+	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -34,15 +36,18 @@ func NewLoanApplicationSvc(customer repositories.CustomerRepo, province reposito
 func (l *loanApplicationSvc) CreateLoanApplication(ctx context.Context, application *request.CreateLoanApplication) *responses.Response {
 	_, err := l.customer.FindCustomerByKtpNumber(ctx, application.KtpNumber)
 	if err == nil {
+		log.Println(err)
 		return responses.ErrorResponse(responses.M_BAD_REQUEST, http.StatusBadRequest, errors.New("ktp number already exist"))
 	}
 	_, err = l.customer.FindCustomerByEmail(ctx, application.Email)
 	if err == nil {
+		log.Println(err)
 		return responses.ErrorResponse(responses.M_BAD_REQUEST, http.StatusBadRequest, errors.New("email already exist"))
 	}
 
 	date, err := time.Parse("2006-01-02", application.DateOfBirth)
 	if err != nil {
+		log.Println(err)
 		return responses.ErrorResponse(responses.M_INTERNAL_SERVER_ERROR, http.StatusInternalServerError, errors.New("internal server error"))
 	}
 	age := time.Now().Year() - date.Year()
@@ -52,6 +57,7 @@ func (l *loanApplicationSvc) CreateLoanApplication(ctx context.Context, applicat
 
 	province, err := l.province.FindProvinceByName(ctx, application.AddressProvince)
 	if err != nil {
+		log.Println(err)
 		return responses.ErrorResponse(responses.M_INTERNAL_SERVER_ERROR, http.StatusInternalServerError, errors.New("internal server error"))
 	}
 
@@ -68,14 +74,20 @@ func (l *loanApplicationSvc) CreateLoanApplication(ctx context.Context, applicat
 		return responses.ErrorResponse(responses.M_UNPROCESSABLE_ENTITY, http.StatusUnprocessableEntity, errors.New("selfie image extension not allowed"))
 	}
 
-	ktpFileName := "/ktp/" + helpers.RandomString(16) + "." + ktpImageExt
-	selfieFileName := "/selfie/" + helpers.RandomString(16) + "." + SelfieImageExt
-	err = helpers.UploadFile(ctx, application.KtpImage, "../resources"+ktpFileName)
+	ktpFileName := "resources/ktp/" + helpers.RandomString(16) + "." + ktpImageExt
+	selfieFileName := "resources/selfie/" + helpers.RandomString(16) + "." + SelfieImageExt
+	if os.Getenv("APP_ENV") == "testing" {
+		ktpFileName = "../" + ktpFileName
+		selfieFileName = "../" + selfieFileName
+	}
+	err = helpers.UploadFile(ctx, application.KtpImage, ktpFileName)
 	if err != nil {
+		log.Println(err)
 		return responses.ErrorResponse(responses.M_INTERNAL_SERVER_ERROR, http.StatusInternalServerError, errors.New("internal server error"))
 	}
-	err = helpers.UploadFile(ctx, application.SelfieImage, "../resources"+selfieFileName)
+	err = helpers.UploadFile(ctx, application.SelfieImage, selfieFileName)
 	if err != nil {
+		log.Println(err)
 		return responses.ErrorResponse(responses.M_INTERNAL_SERVER_ERROR, http.StatusInternalServerError, errors.New("internal server error"))
 	}
 

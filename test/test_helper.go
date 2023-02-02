@@ -10,6 +10,7 @@ import (
 	gorm2 "loan_process/httpserver/repositories/gorm"
 	"loan_process/httpserver/repositories/models"
 	"loan_process/httpserver/services"
+	"os"
 	"time"
 )
 
@@ -89,6 +90,7 @@ func createDailyLoanRequest(db *gorm.DB, request uint) {
 }
 
 func setupApp(engine *gin.Engine, db *gorm.DB) {
+	os.Setenv("APP_ENV", "testing")
 	//repo
 	customer := gorm2.NewCustomerRepo(db)
 	province := gorm2.NewProvinceRepo(db)

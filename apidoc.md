@@ -150,7 +150,7 @@ Get list customers
           "id": 1,
           "full_name": "Farhan",
           "ktp_number": "1234567890123123",
-          "email": "farhan@gmail.com",
+          "email": "farhan@gmail.com"
         }
       ]
     }

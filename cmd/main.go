@@ -25,6 +25,14 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	if err = os.Mkdir("./resources/ktp", os.ModePerm); err != nil {
+		log.Println(err)
+	}
+	if err = os.Mkdir("./resources/selfie", os.ModePerm); err != nil {
+		log.Println(err)
+	}
+	os.Setenv("APP_ENV", "production")
+
 	router := gin.Default()
 	//repo
 	customer := gorm2.NewCustomerRepo(db)

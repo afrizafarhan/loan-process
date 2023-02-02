@@ -3,9 +3,11 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
 	"loan_process/httpserver/repositories"
 	"loan_process/httpserver/responses"
 	"net/http"
+	"os"
 )
 
 type customerSvc struct {
@@ -51,8 +53,8 @@ func (c *customerSvc) GetDetailCustomer(ctx context.Context, id uint) *responses
 		Email:           customer.Email,
 		Nationality:     customer.Nationality,
 		AddressProvince: customer.Province.Name,
-		KtpImage:        "resources/" + customer.KtpImage,
-		SelfieImage:     "resources/" + customer.SelfieImage,
+		KtpImage:        fmt.Sprintf("%s%s/%s", os.Getenv("APP_URL"), ":"+os.Getenv("PORT"), customer.KtpImage),
+		SelfieImage:     fmt.Sprintf("%s%s/%s", os.Getenv("APP_URL"), ":"+os.Getenv("PORT"), customer.SelfieImage),
 		CreatedAt:       customer.CreatedAt,
 		UpdatedAt:       customer.UpdatedAt,
 	}

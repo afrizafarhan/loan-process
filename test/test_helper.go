@@ -44,6 +44,12 @@ func createCustomerWithCustomerLoanRequest(db *gorm.DB, status string) (*models.
 	return &customer, &loanRequest
 }
 
+func GetCustomerById(db *gorm.DB, id uint) *models.Customer {
+	customerRepo := gorm2.NewCustomerRepo(db)
+	customer, _ := customerRepo.FindCustomerById(context.Background(), id)
+	return customer
+}
+
 func createDailyLoanRequest(db *gorm.DB, request uint) {
 	dailyLoan := models.DailyLoanRequest{
 		CurrentDateRequest: time.Now(),
@@ -65,9 +71,14 @@ func setupApp(engine *gin.Engine, db *gorm.DB) {
 	//service
 	service := services.NewLoanApplicationSvc(customer, province, loanRequest, dailyLoan, paymentInstalment)
 	dailyLoanSvc := services.NewDailyLoanRequestSvc(dailyLoan)
+	customerSvc := services.NewCustomerSvc(customer)
+	//controller
 	controller := controllers.NewLoanApplicationController(service)
+	customerController := controllers.NewCustomerController(customerSvc)
+	//middleware
 	middleware := middlewares.NewCheckDailyRequestMiddleware(dailyLoanSvc)
-	router := httpserver.NewRouter(engine, controller, middleware)
+
+	router := httpserver.NewRouter(engine, controller, customerController, middleware)
 	router.SetRouter()
 }
 
@@ -77,4 +88,9 @@ func truncateCustomer(db *gorm.DB) {
 
 func truncateDailyLoan(db *gorm.DB) {
 	db.Exec("TRUNCATE daily_loan_requests CASCADE")
+}
+
+func formatDate(format string, date string) string {
+	time, _ := time.Parse(format, date)
+	return time.String()
 }

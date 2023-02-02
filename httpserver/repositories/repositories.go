@@ -11,6 +11,7 @@ type CustomerRepo interface {
 	FindCustomerByKtpNumber(ctx context.Context, ktpNumber string) (*models.Customer, error)
 	FindCustomerByEmail(ctx context.Context, email string) (*models.Customer, error)
 	FindCustomerById(ctx context.Context, id uint) (*models.Customer, error)
+	FindCustomers(ctx context.Context) ([]models.Customer, error)
 }
 
 type CustomerLoanRequestRepo interface {

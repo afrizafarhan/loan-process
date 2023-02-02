@@ -17,4 +17,5 @@ type Customer struct {
 	SelfieImage string
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+	Province    Province `gorm:"foreignKey:ProvinceId;references:Id"`
 }

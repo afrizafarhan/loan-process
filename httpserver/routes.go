@@ -9,13 +9,15 @@ import (
 type Router struct {
 	router          *gin.Engine
 	loanApplication controllers.LoanApplicationController
+	customer        controllers.CustomerController
 	middleware      middlewares.CheckDailyRequestMiddleware
 }
 
-func NewRouter(engine *gin.Engine, loanApplication controllers.LoanApplicationController, middleware middlewares.CheckDailyRequestMiddleware) *Router {
+func NewRouter(engine *gin.Engine, loanApplication controllers.LoanApplicationController, customer controllers.CustomerController, middleware middlewares.CheckDailyRequestMiddleware) *Router {
 	return &Router{
 		router:          engine,
 		loanApplication: loanApplication,
+		customer:        customer,
 		middleware:      middleware,
 	}
 }
@@ -23,9 +25,14 @@ func NewRouter(engine *gin.Engine, loanApplication controllers.LoanApplicationCo
 func (r *Router) SetRouter() *Router {
 	r.router.Static("/resources/", "./resources")
 	r.router.Use(cors)
+
 	r.router.POST("/v1/loan-applications", r.middleware.CheckDailyRequest(), r.loanApplication.Create)
 	r.router.POST("/v1/loan-applications/:customerId/reapply", r.middleware.CheckDailyRequest(), r.loanApplication.ReapplyLoanApplication)
 	r.router.GET("/v1/loan-applications", r.loanApplication.GetLoanApplications)
+
+	r.router.GET("/v1/customers", r.customer.GetCustomers)
+	r.router.GET("/v1/customers/:id", r.customer.GetDetailCustomer)
+
 	return r
 }
 

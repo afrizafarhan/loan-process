@@ -156,8 +156,8 @@ Get list customers
     }
     ```
 
-
-***Get /v1/customers/:id/detail**
+***Get /v1/customers/:id***
+----
 Get detail data customer
 * **Headers**  
   *Content-Type:* `application/json`
@@ -197,7 +197,8 @@ Get detail data customer
       }
       ```
 
-***Get /v1/customers/:id/loan-applications**
+***Get /v1/customers/:id/loan-applications***
+----
 Get detail data customer
 * **Headers**  
   *Content-Type:* `application/json`

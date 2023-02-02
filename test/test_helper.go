@@ -44,6 +44,33 @@ func createCustomerWithCustomerLoanRequest(db *gorm.DB, status string) (*models.
 	return &customer, &loanRequest
 }
 
+func createInstallment(db *gorm.DB, customer *models.Customer, customerLoanRequest *models.CustomerLoanRequest) *[]models.PaymentInstallment {
+	var instalments []models.PaymentInstallment
+	installmentAmount := customerLoanRequest.Amount / customerLoanRequest.Tenor
+	year := time.Now().Year()
+	month := time.Now().Month()
+	day := 10
+	for i := uint(1); i <= customerLoanRequest.Tenor; i++ {
+		if month == 12 && i == 2 {
+			month += 1
+			year += 1
+		}
+		dueDate := time.Date(year, month, day, 0, 0, 0, 0, time.Local)
+		instalments = append(instalments, models.PaymentInstallment{
+			CustomerId:            customer.Id,
+			CustomerLoanRequestId: customerLoanRequest.Id,
+			Amount:                installmentAmount,
+			Status:                "not_paid",
+			DueDate:               dueDate,
+			CreatedAt:             time.Now(),
+			UpdatedAt:             time.Now(),
+		})
+	}
+	paymentInstallment := gorm2.NewPaymentInstallmentRepo(db)
+	paymentInstallment.SavePaymentInstalment(context.Background(), &instalments)
+	return &instalments
+}
+
 func GetCustomerById(db *gorm.DB, id uint) *models.Customer {
 	customerRepo := gorm2.NewCustomerRepo(db)
 	customer, _ := customerRepo.FindCustomerById(context.Background(), id)
@@ -72,13 +99,15 @@ func setupApp(engine *gin.Engine, db *gorm.DB) {
 	service := services.NewLoanApplicationSvc(customer, province, loanRequest, dailyLoan, paymentInstalment)
 	dailyLoanSvc := services.NewDailyLoanRequestSvc(dailyLoan)
 	customerSvc := services.NewCustomerSvc(customer)
+	paymentInstalmentSvc := services.NewPaymentInstallmentSvc(paymentInstalment)
 	//controller
 	controller := controllers.NewLoanApplicationController(service)
 	customerController := controllers.NewCustomerController(customerSvc)
+	paymentInstallmentController := controllers.NewPaymentInstallmentController(paymentInstalmentSvc)
 	//middleware
 	middleware := middlewares.NewCheckDailyRequestMiddleware(dailyLoanSvc)
 
-	router := httpserver.NewRouter(engine, controller, customerController, middleware)
+	router := httpserver.NewRouter(engine, controller, customerController, paymentInstallmentController, middleware)
 	router.SetRouter()
 }
 

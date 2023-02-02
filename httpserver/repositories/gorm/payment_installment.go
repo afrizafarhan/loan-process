@@ -23,7 +23,7 @@ func (p *paymentInstallmentRepo) FindInstallmentByCustomerId(ctx context.Context
 	var installments []models.PaymentInstallment
 	err := p.db.Where("customer_id = ?", customerId).Find(&installments).Error
 	if err != nil {
-		return installments, err
+		return nil, err
 	}
 	return installments, nil
 }

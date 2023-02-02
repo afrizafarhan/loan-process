@@ -23,3 +23,7 @@ type CustomerSvc interface {
 	GetDetailCustomer(ctx context.Context, id uint) *responses.Response
 	GetCustomerLoanApplications(ctx context.Context, id uint) *responses.Response
 }
+
+type PaymentInstallmentSvc interface {
+	GetInstallmentByCustomer(ctx context.Context, customerId uint) *responses.Response
+}

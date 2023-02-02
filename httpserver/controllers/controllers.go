@@ -15,3 +15,7 @@ type CustomerController interface {
 	GetDetailCustomer(ctx *gin.Context)
 	GetCustomerLoanApplications(ctx *gin.Context)
 }
+
+type PaymentInstallmentController interface {
+	GetInstallmentByCustomerAndLoanRequest(ctx *gin.Context)
+}

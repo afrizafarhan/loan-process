@@ -7,18 +7,20 @@ import (
 )
 
 type Router struct {
-	router          *gin.Engine
-	loanApplication controllers.LoanApplicationController
-	customer        controllers.CustomerController
-	middleware      middlewares.CheckDailyRequestMiddleware
+	router             *gin.Engine
+	loanApplication    controllers.LoanApplicationController
+	customer           controllers.CustomerController
+	paymentInstallment controllers.PaymentInstallmentController
+	middleware         middlewares.CheckDailyRequestMiddleware
 }
 
-func NewRouter(engine *gin.Engine, loanApplication controllers.LoanApplicationController, customer controllers.CustomerController, middleware middlewares.CheckDailyRequestMiddleware) *Router {
+func NewRouter(engine *gin.Engine, loanApplication controllers.LoanApplicationController, customer controllers.CustomerController, paymentInstallment controllers.PaymentInstallmentController, middleware middlewares.CheckDailyRequestMiddleware) *Router {
 	return &Router{
-		router:          engine,
-		loanApplication: loanApplication,
-		customer:        customer,
-		middleware:      middleware,
+		router:             engine,
+		loanApplication:    loanApplication,
+		customer:           customer,
+		middleware:         middleware,
+		paymentInstallment: paymentInstallment,
 	}
 }
 
@@ -33,6 +35,8 @@ func (r *Router) SetRouter() *Router {
 	r.router.GET("/v1/customers", r.customer.GetCustomers)
 	r.router.GET("/v1/customers/:id", r.customer.GetDetailCustomer)
 	r.router.GET("/v1/customers/:id/loan-applications", r.customer.GetCustomerLoanApplications)
+
+	r.router.GET("/v1/payment-installments/:id", r.paymentInstallment.GetInstallmentByCustomerAndLoanRequest)
 
 	return r
 }
